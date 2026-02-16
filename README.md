@@ -4,11 +4,19 @@ Real-time Sea of Thieves telemetry dashboard powered by **mitmproxy + PySide6**.
 
 ---
 
-
 ## 📸 Screenshot
 
 ![Telemetry Dashboard](img/screenshot.png)
 
+---
+
+## Personal Message:
+
+Built this project myself, but I let AI help spice up the GUI a bit. Frontend and I have a complicated relationship 😄
+
+The README was also generated with AI support to keep things structured and readable.
+
+If you’ve got questions, ideas, improvements, or just want to talk tech, feel free to reach out on Discord: insane_software
 ---
 
 ## 🚀 Features
