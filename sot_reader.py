@@ -701,7 +701,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.proxy_thread = None
         self.proxy_running = False
-        self.log_file_path = os.path.join(get_app_dir(), "sea_of_thieves_capture.txt")
+        self.log_file_path = os.path.join(get_app_dir(), "logs\sea_of_thieves_capture.txt")
         self.event_history = []
         self.max_event_history = 50
 
