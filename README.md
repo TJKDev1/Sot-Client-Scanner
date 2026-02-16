@@ -17,6 +17,7 @@ Built this project myself, but I let AI help spice up the GUI a bit. Frontend an
 The README was also generated with AI support to keep things structured and readable.
 
 If you’ve got questions, ideas, improvements, or just want to talk tech, feel free to reach out on Discord: insane_software
+
 ---
 
 ## 🚀 Features
