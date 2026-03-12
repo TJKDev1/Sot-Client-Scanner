@@ -21,6 +21,8 @@ Sea of Thieves  ──▶  mitmproxy (mitmdump)  ──▶  game_capture.py  ─
 4. Parsed data is emitted to stdout in tagged format (e.g. `[POSITION]`, `[SHIP_SYSTEMS]`, `[NETWORK]`)
 5. The GUI reads stdout in a background thread and updates the dashboard panels in real-time
 
+Capture logs are written to `logs/sea_of_thieves_capture.txt` (telemetry JSON) and `logs/websocket_capture.txt` (WebSocket traffic).
+
 ---
 
 ## Features
@@ -171,82 +173,18 @@ Certificate location (checked automatically):
 
 ## Captured Telemetry
 
-### Player
-- Position (X/Y/Z) with island/region detection
-- Current action state (60+ states)
-- Movement base (ground, ship, ladder, etc.)
-- Interaction prompts & location discoveries
-- Crew information (size, type, alliance, guild)
+| Category | Data |
+|----------|------|
+| Player | Position (X/Y/Z), island/region, action state (60+), movement base, prompts, crew info |
+| Ship | Type (Sloop/Brig/Galleon), active systems (wheel, sails, capstan, cannons, harpoons, rudder, masts) |
+| World Events | Skull clouds, ashen lords, storms, volcanoes, forts, shipwrecks, mermaids & more |
+| Nearby Ships | Player ships, AI ships (aggressive/battle/passive), rowboats |
+| AI & Entities | Skeletons, phantoms, megalodon, kraken, sirens, ocean crawlers, fauna, pets |
+| General Entities | NPCs, loot, consumables, deployables, mechanisms, storage containers |
+| Network | Ping (RTT), jitter, packet loss, bandwidth, frame times & histogram |
+| Session | Game mode, build ID, platform, window state, UI transitions, season & company progression |
 
-### Ship
-- Ship type (Sloop, Brigantine, Galleon)
-- Active control systems: Wheel, Sails, Capstan, Cannons, Harpoons, Rudder, Masts
-- Hull damage, water level, and sinking data is available but unreliable — excluded from the dashboard
-
-### World Events
-- Skull Clouds, Ashen Lord Clouds, Ship Clouds, Flameheart
-- Storms, Fog Banks, Volcanoes, Earthquakes, Geysers
-- Haunted Forts, Spires, Skeleton Thrones
-- Shipwrecks (standard, graveyard, smuggler)
-- Barrels of Plenty, Message in a Bottle, Wreck Debris
-- Mermaids
-
-### Nearby Ships
-- Player ships (Sloop, Brigantine, Galleon)
-- AI ships (aggressive, battle, passive, Reaper's Tribute)
-- Rowboats (standard, cannon, harpoon)
-
-### AI & Entities
-- Skeletons, Phantoms, Sharks, Megalodon, Kraken
-- Ghost Ships, Ocean Crawlers, Sirens
-- Fauna, Pets, Fish
-
-### General Entities
-- NPCs, Players, Loot & Booty
-- Consumables, Ammo, Gold, Doubloons
-- Deployable Cannons, Mechanisms, Storage Containers
-- Fireworks, Traps, Statues
-
-### Network & Performance
-- Ping (RTT), jitter, packet loss (in/out), bandwidth (in/out)
-- Frame duration (average, min, max, target), frame time histogram
-
-### Session & Client
-- Game mode & play state
-- Build ID, platform, device spec
-- Window focus & fullscreen state
-- UI screen transitions, boot errors
-- Services connection results
-- Season & company progression
-
----
-
-## Generated Logs
-
-Automatically written to the `logs/` directory:
-
-| File | Contents |
-|------|----------|
-| `sea_of_thieves_capture.txt` | Full telemetry JSON from intercepted POST requests |
-| `websocket_capture.txt` | WebSocket payloads, connection events, binary dumps |
-
-All entries are timestamped.
-
----
-
-## Proxy Handling (Windows)
-
-The application automatically:
-
-- Enables the system proxy when capture starts
-- Disables the proxy on stop
-- Disables the proxy on crash or forced exit via `atexit` handlers
-
-Manual fallback:
-
-```
-Internet Options → LAN Settings → Disable Proxy
-```
+For the full list of tracked keys, see [`game_capture.py`](game_capture.py).
 
 ---
 
@@ -254,7 +192,7 @@ Internet Options → LAN Settings → Disable Proxy
 
 | Problem | Solution |
 |---------|----------|
-| Proxy stuck enabled after a crash | Open **Internet Options → LAN Settings** and uncheck the proxy, or relaunch the app (it disables the proxy on startup) |
+| Proxy stuck enabled after a crash | Open **Internet Options → LAN Settings** and uncheck the proxy, or relaunch the app (it disables the proxy on startup). The app also auto-disables the proxy via `atexit` handlers. |
 | Certificate not trusted / HTTPS errors | Re-run `mitmproxy`, visit `http://mitm.it`, and reinstall the certificate |
 | No telemetry data appearing | Make sure Sea of Thieves is running **after** clicking Start Capture — the game must establish connections through the proxy |
 | `mitmdump` not found | Ensure mitmproxy is installed and its binary is on your system PATH |
