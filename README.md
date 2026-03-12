@@ -135,11 +135,15 @@ python main.py
 
 ## Building a Standalone EXE
 
+> **Important:** Always build via `uv run pyinstaller`. Running bare `pyinstaller` uses your global Python installation and won't bundle PySide6 or mitmproxy (which live in the project venv).
+
 ```bash
-pyinstaller --onefile --windowed --name "SoT_Reader" main.py
+uv run pyinstaller --onefile --windowed --name "SoT_Reader" main.py
 ```
 
-`game_capture.py` must be placed in the same directory as the EXE — it is loaded by `mitmdump` at runtime as an addon script.
+The output EXE is placed in `dist/SoT_Reader.exe`.
+
+**Deployment layout** — `game_capture.py` must be in the same folder as the EXE. It is loaded by `mitmdump` at runtime as an addon script and cannot be bundled inside the EXE:
 
 ```
 SoT_Reader.exe
