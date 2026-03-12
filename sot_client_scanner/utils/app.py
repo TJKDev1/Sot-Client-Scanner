@@ -1,16 +1,18 @@
 """Application-level helpers: paths, mitmproxy detection, certificate check."""
 
-import os
+import sys
 from pathlib import Path
 
 
 def get_project_root():
     """Return the project root directory (parent of sot_client_scanner/).
 
-    __file__ = sot_client_scanner/utils/app.py
-    → dirname × 3 = project root
+    When running from a frozen executable (PyInstaller / cx_Freeze), uses
+    the directory containing the .exe.  Otherwise walks up from __file__.
     """
-    return os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    if getattr(sys, "frozen", False):
+        return str(Path(sys.executable).parent)
+    return str(Path(__file__).parents[2])
 
 
 def setup_mitmproxy():

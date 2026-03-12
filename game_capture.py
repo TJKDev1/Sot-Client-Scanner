@@ -5,25 +5,38 @@ This file is loaded by mitmdump to intercept and parse game telemetry.
 from mitmproxy import http
 import atexit
 import json
+import logging
+import logging.handlers
 import os
 from datetime import datetime
 import re
 
 
 _LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+_MAX_LOG_BYTES = 10 * 1024 * 1024  # 10 MB per log file
+_BACKUP_COUNT = 3                   # keep 3 rotated backups
 
 
 class GameCapture:
     def __init__(self):
         os.makedirs(_LOG_DIR, exist_ok=True)
-        self._log_file = None
-        self._ws_log_file = None
         self.url_pattern = r"https://.*-fd\.prod\.athena\.msrareservices\.com/ares/cyclone/api/ingestion/tenant/athenaprodga/route/game/.*"
         print("[FILTER] Capturing ALL Sea of Thieves events - NO FILTERING!")
         print("[WEBSOCKET] Logging to websocket_capture.txt")
 
+        # Rotating log handlers (10 MB max, 3 backups)
+        self._main_logger = self._make_rotating_logger(
+            "sot_capture",
+            os.path.join(_LOG_DIR, "sea_of_thieves_capture.txt"),
+        )
+        self._ws_logger = self._make_rotating_logger(
+            "sot_ws_capture",
+            os.path.join(_LOG_DIR, "websocket_capture.txt"),
+        )
+
         # Safety net: close file handles even if done() is never called
         atexit.register(self._close_files)
+
 
         self.skip_events = []  # no skipping; UI/screen + status events are useful
 
@@ -73,36 +86,37 @@ class GameCapture:
             "Unknown",
         ]
 
-    @property
-    def log_file(self):
-        """Lazily open the main log file."""
-        if self._log_file is None or self._log_file.closed:
-            self._log_file = open(os.path.join(_LOG_DIR, "sea_of_thieves_capture.txt"), "a", encoding="utf-8")
-        return self._log_file
+    @staticmethod
+    def _make_rotating_logger(name, filepath):
+        """Create a logger backed by a RotatingFileHandler."""
+        logger = logging.getLogger(name)
+        logger.setLevel(logging.INFO)
+        logger.propagate = False
+        if not logger.handlers:
+            handler = logging.handlers.RotatingFileHandler(
+                filepath,
+                maxBytes=_MAX_LOG_BYTES,
+                backupCount=_BACKUP_COUNT,
+                encoding="utf-8",
+            )
+            handler.setFormatter(logging.Formatter("%(message)s"))
+            logger.addHandler(handler)
+        return logger
 
-    @property
-    def ws_log_file(self):
-        """Lazily open the WebSocket log file."""
-        if self._ws_log_file is None or self._ws_log_file.closed:
-            self._ws_log_file = open(os.path.join(_LOG_DIR, "websocket_capture.txt"), "a", encoding="utf-8")
-        return self._ws_log_file
-
-    def _safe_write(self, file_prop, content):
-        """Write to a log file, swallowing I/O errors so the addon stays alive."""
+    def _safe_write(self, logger, content):
+        """Write to a rotating log, swallowing errors so the addon stays alive."""
         try:
-            f = file_prop
-            f.write(content)
-            f.flush()
+            logger.info(content)
         except Exception as e:
             print(f"[LOG_ERROR] Failed to write: {e}")
 
     def _close_files(self):
-        """Flush and close both log files (safe to call multiple times)."""
-        for f in (self._log_file, self._ws_log_file):
-            if f is not None and not f.closed:
+        """Flush and close all log handlers (safe to call multiple times)."""
+        for logger in (self._main_logger, self._ws_logger):
+            for handler in logger.handlers[:]:
                 try:
-                    f.flush()
-                    f.close()
+                    handler.flush()
+                    handler.close()
                 except Exception:
                     pass
 
@@ -145,7 +159,7 @@ class GameCapture:
         log_entry += f"Type: {content_type}\n"
         log_entry += f"Content:\n{decoded_content}\n"
 
-        self._safe_write(self.ws_log_file, log_entry)
+        self._safe_write(self._ws_logger, log_entry)
 
     def websocket_start(self, flow):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -158,7 +172,7 @@ class GameCapture:
         log_entry += f"URL: {url}\n"
         log_entry += f"Headers:\n{json.dumps(headers, indent=2)}\n"
 
-        self._safe_write(self.ws_log_file, log_entry)
+        self._safe_write(self._ws_logger, log_entry)
 
     def websocket_end(self, flow):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -171,7 +185,7 @@ class GameCapture:
         log_entry += f"URL: {url}\n"
         log_entry += f"Total Messages: {msg_count}\n"
 
-        self._safe_write(self.ws_log_file, log_entry)
+        self._safe_write(self._ws_logger, log_entry)
 
     def hex_dump(self, data, bytes_per_line=16):
         lines = []
@@ -450,7 +464,7 @@ class GameCapture:
             log_entry = f"\n{'='*80}\n"
             log_entry += f"[{timestamp}] CAPTURED POST REQUEST\n"
             log_entry += f"Body (JSON):\n{json.dumps(body, indent=2)}\n"
-            self._safe_write(self.log_file, log_entry)
+            self._safe_write(self._main_logger, log_entry)
 
             if "events" in body:
                 for event in body["events"]:
