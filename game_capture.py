@@ -10,9 +10,12 @@ from datetime import datetime
 import re
 
 
+_LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
+
+
 class GameCapture:
     def __init__(self):
-        os.makedirs("logs", exist_ok=True)
+        os.makedirs(_LOG_DIR, exist_ok=True)
         self._log_file = None
         self._ws_log_file = None
         self.url_pattern = r"https://.*-fd\.prod\.athena\.msrareservices\.com/ares/cyclone/api/ingestion/tenant/athenaprodga/route/game/.*"
@@ -74,14 +77,14 @@ class GameCapture:
     def log_file(self):
         """Lazily open the main log file."""
         if self._log_file is None or self._log_file.closed:
-            self._log_file = open("logs/sea_of_thieves_capture.txt", "a", encoding="utf-8")
+            self._log_file = open(os.path.join(_LOG_DIR, "sea_of_thieves_capture.txt"), "a", encoding="utf-8")
         return self._log_file
 
     @property
     def ws_log_file(self):
         """Lazily open the WebSocket log file."""
         if self._ws_log_file is None or self._ws_log_file.closed:
-            self._ws_log_file = open("logs/websocket_capture.txt", "a", encoding="utf-8")
+            self._ws_log_file = open(os.path.join(_LOG_DIR, "websocket_capture.txt"), "a", encoding="utf-8")
         return self._ws_log_file
 
     def _safe_write(self, file_prop, content):

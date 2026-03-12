@@ -9,6 +9,7 @@ from PySide6.QtWidgets import (
     QScrollArea, QProgressBar, QSplitter, QTabWidget, QMessageBox,
 )
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QTextCursor
 
 from sot_client_scanner.constants.companies import COMPANY_INFO
 from sot_client_scanner.proxy.thread import ProxyThread
@@ -27,7 +28,6 @@ class MainWindow(QMainWindow):
         self.proxy_running = False
         self._stopping = False
         self.log_file_path = os.path.join(get_project_root(), "logs", "sea_of_thieves_capture.txt")
-        self.event_history = []
         self.max_event_history = 50
 
         self.setWindowTitle("Sea of Thieves — Telemetry Reader")
@@ -351,12 +351,21 @@ class MainWindow(QMainWindow):
             self.session_panel.update_event(event_name)
             return
 
-        entry = f"<span style='color:#3f3f46'>[{ts}]</span> <span style='color:#d4d4d8'>{event_name}</span>"
-        self.event_history.insert(0, entry)
-        if len(self.event_history) > self.max_event_history:
-            self.event_history = self.event_history[:self.max_event_history]
+        entry = f"<span style='color:#3f3f46'>[{ts}]</span> <span style='color:#d4d4d8'>{event_name}</span><br>"
 
-        self.event_log.setHtml("<br>".join(self.event_history))
+        # Prepend new entry at the top of the document
+        cursor = self.event_log.textCursor()
+        cursor.movePosition(QTextCursor.Start)
+        cursor.insertHtml(entry)
+
+        # Prune oldest entries beyond the cap
+        doc = self.event_log.document()
+        while doc.blockCount() > self.max_event_history:
+            cursor.movePosition(QTextCursor.End)
+            cursor.movePosition(QTextCursor.StartOfBlock, QTextCursor.KeepAnchor)
+            cursor.movePosition(QTextCursor.PreviousBlock, QTextCursor.KeepAnchor)
+            cursor.removeSelectedText()
+
         self.session_panel.update_event(event_name)
 
     def update_companies(self, companies):
