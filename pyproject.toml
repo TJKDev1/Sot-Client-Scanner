@@ -8,3 +8,8 @@ dependencies = [
     "mitmproxy>=12.2.1",
     "pyside6>=6.10.2",
 ]
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.19.0",
+]

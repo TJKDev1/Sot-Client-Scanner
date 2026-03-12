@@ -1,3 +1,16 @@
+# Virtual environment
 /.venv/
-.idea
+
+# IDE
+.idea/
+
+# Python bytecode
+__pycache__/
+
+# Log files
 *.txt
+
+# PyInstaller
+build/
+dist/
+*.spec
