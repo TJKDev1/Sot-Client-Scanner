@@ -131,6 +131,7 @@ class MainWindow(QMainWindow):
         self.company_layout.setContentsMargins(0, 0, 0, 0)
         self.company_bars = {}
         self.company_labels = {}
+        self._company_name_labels = {}
 
         scroll = QScrollArea()
         scroll.setWidget(self.company_widget)
@@ -353,49 +354,65 @@ class MainWindow(QMainWindow):
         self.session_panel.update_event(event_name)
 
     def update_companies(self, companies):
-        # Clear existing
-        for i in reversed(range(self.company_layout.count())):
-            w = self.company_layout.itemAt(i).widget()
-            if w:
-                w.deleteLater()
+        # Build a set of company IDs in this update
+        incoming_ids = {c["id"] for c in companies}
 
-        self.company_bars = {}
-        self.company_labels = {}
+        # Remove rows for companies no longer present
+        for cid in list(self.company_bars.keys()):
+            if cid not in incoming_ids:
+                # Find and remove widgets for this row
+                bar = self.company_bars.pop(cid, None)
+                lbl = self.company_labels.pop(cid, None)
+                name_lbl = self._company_name_labels.pop(cid, None)
+                for w in (bar, lbl, name_lbl):
+                    if w:
+                        w.deleteLater()
 
-        row = 0
         for c in companies:
             cid = c["id"]
             info = COMPANY_INFO.get(cid, {"name": cid, "color": "#71717a"})
-
-            name_lbl = QLabel(info['name'])
-            name_lbl.setStyleSheet(f"font-size: 11px; color: {info['color']}; font-weight: bold;")
-            name_lbl.setMinimumWidth(160)
-            self.company_layout.addWidget(name_lbl, row, 0)
-
-            lvl_lbl = QLabel(f"Lv. {c['level']}")
-            lvl_lbl.setStyleSheet(f"font-size: 11px; color: {info['color']}; font-weight: bold; min-width: 50px;")
-            self.company_layout.addWidget(lvl_lbl, row, 1)
-
-            bar = QProgressBar()
-            bar.setMinimum(0)
             xp_next = c["xp_next"] if c["xp_next"] > 0 else 1
-            bar.setMaximum(xp_next)
-            bar.setValue(min(c["xp"], xp_next))
-            bar.setFormat(f"{c['xp']:,} / {c['xp_next']:,} XP")
-            bar.setStyleSheet(f"""
-                QProgressBar {{
-                    background-color: #1c2028; border: 1px solid #1e2733;
-                    border-radius: 4px; height: 16px; text-align: center;
-                    font-size: 9px; color: #d4d4d8;
-                }}
-                QProgressBar::chunk {{
-                    background-color: {info['color']}; border-radius: 3px;
-                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 {info['color']}, stop:1 {info['color']}88);
-                }}
-            """)
-            self.company_layout.addWidget(bar, row, 2)
 
-            self.company_bars[cid] = bar
-            self.company_labels[cid] = lvl_lbl
-            row += 1
+            if cid in self.company_bars:
+                # Update existing widgets in-place
+                self.company_bars[cid].setMaximum(xp_next)
+                self.company_bars[cid].setValue(min(c["xp"], xp_next))
+                self.company_bars[cid].setFormat(f"{c['xp']:,} / {c['xp_next']:,} XP")
+                self.company_labels[cid].setText(f"Lv. {c['level']}")
+            else:
+                # Create new row
+                row = self.company_layout.rowCount()
+
+                name_lbl = QLabel(info['name'])
+                name_lbl.setStyleSheet(f"font-size: 11px; color: {info['color']}; font-weight: bold;")
+                name_lbl.setMinimumWidth(160)
+                self.company_layout.addWidget(name_lbl, row, 0)
+
+                lvl_lbl = QLabel(f"Lv. {c['level']}")
+                lvl_lbl.setStyleSheet(f"font-size: 11px; color: {info['color']}; font-weight: bold; min-width: 50px;")
+                self.company_layout.addWidget(lvl_lbl, row, 1)
+
+                bar = QProgressBar()
+                bar.setMinimum(0)
+                bar.setMaximum(xp_next)
+                bar.setValue(min(c["xp"], xp_next))
+                bar.setFormat(f"{c['xp']:,} / {c['xp_next']:,} XP")
+                bar.setStyleSheet(f"""
+                    QProgressBar {{
+                        background-color: #1c2028; border: 1px solid #1e2733;
+                        border-radius: 4px; height: 16px; text-align: center;
+                        font-size: 9px; color: #d4d4d8;
+                    }}
+                    QProgressBar::chunk {{
+                        background-color: {info['color']}; border-radius: 3px;
+                        background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                            stop:0 {info['color']}, stop:1 {info['color']}88);
+                    }}
+                """)
+                self.company_layout.addWidget(bar, row, 2)
+
+                self.company_bars[cid] = bar
+                self.company_labels[cid] = lvl_lbl
+                if not hasattr(self, '_company_name_labels'):
+                    self._company_name_labels = {}
+                self._company_name_labels[cid] = name_lbl

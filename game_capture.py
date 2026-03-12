@@ -22,39 +22,6 @@ class GameCapture:
         # Safety net: close file handles even if done() is never called
         atexit.register(self._close_files)
 
-    @property
-    def log_file(self):
-        """Lazily open the main log file."""
-        if self._log_file is None or self._log_file.closed:
-            self._log_file = open("logs/sea_of_thieves_capture.txt", "a", encoding="utf-8")
-        return self._log_file
-
-    @property
-    def ws_log_file(self):
-        """Lazily open the WebSocket log file."""
-        if self._ws_log_file is None or self._ws_log_file.closed:
-            self._ws_log_file = open("logs/websocket_capture.txt", "a", encoding="utf-8")
-        return self._ws_log_file
-
-    def _safe_write(self, file_prop, content):
-        """Write to a log file, swallowing I/O errors so the addon stays alive."""
-        try:
-            f = file_prop
-            f.write(content)
-            f.flush()
-        except Exception as e:
-            print(f"[LOG_ERROR] Failed to write: {e}")
-
-    def _close_files(self):
-        """Flush and close both log files (safe to call multiple times)."""
-        for f in (self._log_file, self._ws_log_file):
-            if f is not None and not f.closed:
-                try:
-                    f.flush()
-                    f.close()
-                except Exception:
-                    pass
-
         self.skip_events = []  # no skipping; UI/screen + status events are useful
 
         # ALL tracked actor keys from the game - COMPLETE LIST
@@ -102,6 +69,39 @@ class GameCapture:
             "FireworkExplosion", "FireworkProjectile",
             "Unknown",
         ]
+
+    @property
+    def log_file(self):
+        """Lazily open the main log file."""
+        if self._log_file is None or self._log_file.closed:
+            self._log_file = open("logs/sea_of_thieves_capture.txt", "a", encoding="utf-8")
+        return self._log_file
+
+    @property
+    def ws_log_file(self):
+        """Lazily open the WebSocket log file."""
+        if self._ws_log_file is None or self._ws_log_file.closed:
+            self._ws_log_file = open("logs/websocket_capture.txt", "a", encoding="utf-8")
+        return self._ws_log_file
+
+    def _safe_write(self, file_prop, content):
+        """Write to a log file, swallowing I/O errors so the addon stays alive."""
+        try:
+            f = file_prop
+            f.write(content)
+            f.flush()
+        except Exception as e:
+            print(f"[LOG_ERROR] Failed to write: {e}")
+
+    def _close_files(self):
+        """Flush and close both log files (safe to call multiple times)."""
+        for f in (self._log_file, self._ws_log_file):
+            if f is not None and not f.closed:
+                try:
+                    f.flush()
+                    f.close()
+                except Exception:
+                    pass
 
     def done(self):
         """Called by mitmproxy when the addon is unloaded."""

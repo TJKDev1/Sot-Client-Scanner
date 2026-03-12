@@ -25,6 +25,7 @@ def set_system_proxy(enable=True):
         except Exception as e:
             print(f"Error setting proxy: {e}")
             return False
+    print("WARNING: Proxy control is only supported on Windows")
     return False
 
 

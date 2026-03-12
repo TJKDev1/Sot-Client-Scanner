@@ -13,8 +13,9 @@ def main():
     """Launch the Sea of Thieves Telemetry Reader."""
     install_safety_handlers()
 
-    print("Disabling proxy on startup...")
-    set_system_proxy(False)
+    if sys.platform == "win32":
+        print("Disabling proxy on startup...")
+        set_system_proxy(False)
 
     app = QApplication(sys.argv)
     app.setStyleSheet(DARK_STYLE)
@@ -25,6 +26,7 @@ def main():
 
     exit_code = app.exec()
 
-    print("Final proxy disable...")
-    set_system_proxy(False)
+    if sys.platform == "win32":
+        print("Final proxy disable...")
+        set_system_proxy(False)
     sys.exit(exit_code)
