@@ -25,6 +25,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.proxy_thread = None
         self.proxy_running = False
+        self._stopping = False
         self.log_file_path = os.path.join(get_project_root(), "logs", "sea_of_thieves_capture.txt")
         self.event_history = []
         self.max_event_history = 50
@@ -273,13 +274,17 @@ class MainWindow(QMainWindow):
             set_system_proxy(False)
 
     def stop_proxy(self):
-        if not self.proxy_running:
+        if not self.proxy_running or self._stopping:
             return
 
+        self._stopping = True
         self.log("Stopping proxy...")
         if self.proxy_thread:
             self.proxy_thread.stop()
-            self.proxy_thread.wait()
+            if not self.proxy_thread.wait(5000):
+                self.log("WARNING: Proxy thread did not stop in time, forcing termination")
+                self.proxy_thread.terminate()
+                self.proxy_thread.wait(2000)
 
         set_system_proxy(False)
         self.log("System proxy disabled")
@@ -293,9 +298,10 @@ class MainWindow(QMainWindow):
         self.start_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.log("Proxy stopped")
+        self._stopping = False
 
     def on_proxy_finished(self):
-        if self.proxy_running:
+        if self.proxy_running and not self._stopping:
             self.stop_proxy()
 
     def closeEvent(self, event):

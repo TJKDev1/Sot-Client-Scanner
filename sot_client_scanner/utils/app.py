@@ -1,16 +1,7 @@
 """Application-level helpers: paths, mitmproxy detection, certificate check."""
 
-import sys
 import os
 from pathlib import Path
-
-
-def get_app_dir():
-    """Return the directory where the application is running from."""
-    if getattr(sys, 'frozen', False):
-        return os.path.dirname(sys.executable)
-    else:
-        return os.path.dirname(os.path.abspath(__file__))
 
 
 def get_project_root():

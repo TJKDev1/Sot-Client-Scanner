@@ -321,7 +321,7 @@ class GameCapture:
             contest_stamp = s.get("contestStampId", "")
             print(
                 f"[SERVICES] Result:{result} Total:{t:.3f}s Refresh:{refresh:.3f}s Token:{token:.3f}s "
-                f"Reconnect:{reconnect:.3f}s Reason:{reason} Requested:{req_stamp} Discovery:{disc_stamp} "
+                f"Reconnect:{reconnect:.3f}s Reason:{reason}|Requested:{req_stamp} Discovery:{disc_stamp} "
                 f"Logon:{logon_stamp} Contest:{contest_stamp}"
             )
 

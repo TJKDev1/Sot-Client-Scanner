@@ -164,7 +164,7 @@ def parse_line(line):
     elif "[SERVICES]" in line:
         match = re.search(
             r"Result:(\S*) Total:([\d.-]+)s Refresh:([\d.-]+)s Token:([\d.-]+)s Reconnect:([\d.-]+)s "
-            r"Reason:(.*?) Requested:(\S*) Discovery:(\S*) Logon:(\S*) Contest:(\S*)",
+            r"Reason:(.*?)\|Requested:(\S*) Discovery:(\S*) Logon:(\S*) Contest:(\S*)",
             line,
         )
         if match:
