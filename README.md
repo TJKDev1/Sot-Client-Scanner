@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="img/logo.png" alt="SoT Client Scanner Logo" width="350"/>
+</p>
+
 # Sea of Thieves Telemetry Reader
 
 > Forked and extended — real-time Sea of Thieves telemetry dashboard powered by **mitmproxy** and **PySide6**.
